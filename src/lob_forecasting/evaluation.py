@@ -10,7 +10,7 @@ def evaluate_predictions(y_true, y_pred, model_name, print_report=True):
 		print(f"Accuracy: {accuracy:.4f}")
 		print(f"Macro F1: {macro_f1:.4f}")
 		print()
-		print(classification_report(y_true, y_pred))
+		print(classification_report(y_true, y_pred, zero_division=0))
 
 	return {
 		"model": model_name,
