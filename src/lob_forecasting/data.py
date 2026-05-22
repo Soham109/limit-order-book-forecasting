@@ -1,4 +1,4 @@
-# this file is AI generated
+"""Utilities for loading FI-2010 benchmark data."""
 
 from pathlib import Path
 import numpy as np
