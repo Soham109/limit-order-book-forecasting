@@ -121,16 +121,28 @@ def add_rolling_context_features(features):
     return features
 
 
-def build_microstructure_features(X, include_context=True, fillna=True):
+def build_microstructure_features(
+    X,
+    include_depth=True,
+    include_context=True,
+    remove_price_levels=False,
+    fillna=True,
+):
     """
-    Build a complete custom microstructure feature table from FI-2010 features.
+    Build a custom microstructure feature table from FI-2010 features.
 
     Parameters
     ----------
     X : np.ndarray
         FI-2010 feature matrix.
+    include_depth : bool
+        Whether to add multi-level depth and depth-imbalance features.
     include_context : bool
         Whether to add rolling/recent-history features.
+    remove_price_levels : bool
+        Whether to remove absolute price-level features such as mid_price
+        and microprice. This keeps more relative features like spread,
+        returns, imbalance, and microprice_deviation.
     fillna : bool
         Whether to fill missing rolling values with 0.
 
@@ -142,10 +154,19 @@ def build_microstructure_features(X, include_context=True, fillna=True):
     lob_df = make_lob_dataframe(X)
 
     features = add_basic_lob_features(lob_df)
-    features = add_depth_features(lob_df, features)
+
+    if include_depth:
+        features = add_depth_features(lob_df, features)
 
     if include_context:
         features = add_rolling_context_features(features)
+
+    if remove_price_levels:
+        drop_cols = [
+            col for col in ["mid_price", "microprice"]
+            if col in features.columns
+        ]
+        features = features.drop(columns=drop_cols)
 
     if fillna:
         features = features.fillna(0)
