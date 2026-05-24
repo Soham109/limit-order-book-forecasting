@@ -1,8 +1,6 @@
 # Limit Order Book Forecasting with Microstructure Features
 
-This project studies short-horizon mid-price movement prediction using the FI-2010 limit order book benchmark dataset. The goal is to understand whether order book states, engineered microstructure features, and recent market context contain predictive information about near-term price movement.
-
-The project includes baseline model benchmarks, microstructure feature engineering, horizon-wise evaluation, and feature-family benchmarks. The next phase extends the pipeline toward probability calibration, signal generation, and execution-cost-aware evaluation.
+This project studies short-horizon mid-price movement prediction using the FI-2010 limit order book benchmark dataset. It tests whether order book states, engineered microstructure features, and recent market context contain predictive information about near-term price movement. The pipeline covers data loading, feature engineering, horizon-wise evaluation, and feature-family ablations, with next steps toward calibration, signal generation, and execution-aware evaluation.
 
 ## Research Questions
 
@@ -14,68 +12,28 @@ The project includes baseline model benchmarks, microstructure feature engineeri
 
 ## Dataset
 
-The project uses the FI-2010 limit order book dataset. Each sample represents a limit order book snapshot, with labels corresponding to future mid-price movement at five forecast horizons.
-
-Labels:
-
-```text
-1 = future mid-price moves up
-2 = future mid-price remains stationary / flat
-3 = future mid-price moves down
-```
-
-Two FI-2010 representations are used:
-
-- Zscore: normalized benchmark feature representation used for baseline models.
-- DecPre: decimal-preserved representation used to reconstruct interpretable bid/ask price and size relationships.
+- FI-2010 limit order book snapshots labeled for five forecast horizons.
+- Labels: 1 = up, 2 = flat, 3 = down.
+- Representations: Zscore (benchmark features) and DecPre (decimal-preserved for microstructure reconstruction).
 
 ## Methodology
 
-The pipeline compares several feature families and models across all five FI-2010 forecast horizons.
+### Feature Families
 
-Feature Families
+- Benchmark 144 (Zscore).
+- Basic microstructure (spread, imbalance, microprice, depth).
+- Rolling-context microstructure (returns, volatility, spread and imbalance stats).
+- Combined benchmark + rolling-context.
 
-1. Full FI-2010 benchmark features
-
-The original 144 normalized features from the FI-2010 Zscore representation.
-
-2. Basic microstructure features
-
-Interpretable current-snapshot features constructed from the top 10 levels of the order book:
-
-- mid-price
-- spread
-- level-1 queue imbalance
-- microprice
-- microprice deviation
-- bid/ask depth over 5 and 10 levels
-- multi-level depth imbalance
-
-3. Rolling-context microstructure features
-
-Recent-history features built from the engineered microstructure quantities:
-
-- mid-price returns over 1, 5, and 10 snapshots
-- rolling volatility over 10 and 50 snapshots
-- rolling spread mean and standard deviation
-- rolling imbalance mean and standard deviation
-- rolling microprice-deviation mean and standard deviation
-
-Absolute price-level features were also removed in one experiment to test whether performance was driven by true relative or dynamic signals rather than price-level shortcuts.
-
-4. Combined feature set
-
-The original 144 FI-2010 benchmark features combined with engineered rolling-context microstructure features.
-
-Models
-
-The project benchmarks:
+### Models
 
 - majority-class baseline
 - logistic regression
 - HistGradientBoosting
 
-Models are evaluated using accuracy, macro F1, and class-wise F1. Macro F1 is emphasized because the task is a three-class prediction problem and accuracy can hide poor performance on the stationary/flat class.
+### Evaluation
+
+- accuracy, macro F1, class-wise F1 (macro F1 emphasized for class balance).
 
 ## Key Results
 
@@ -105,54 +63,44 @@ Best HistGradientBoosting macro-F1 results by forecast horizon:
 
 ### Main Findings
 
-1. The FI-2010 benchmark features contain meaningful predictive signal beyond class imbalance.
-2. Nonlinear models outperform linear models on stronger feature representations.
-3. Static one-snapshot microstructure features are interpretable but insufficient by themselves.
-4. Rolling-context features produce a large improvement, suggesting that recent mid-price dynamics, volatility, and persistent order book pressure are central to short-horizon prediction.
-5. Removing absolute price-level features did not materially reduce performance, suggesting that the improvement is not primarily driven by absolute price-level shortcuts.
-6. Combining benchmark features with engineered rolling-context microstructure features gives the strongest overall performance across horizons.
+- Benchmark features contain meaningful predictive signal beyond class imbalance.
+- Nonlinear models outperform linear models on stronger feature representations.
+- Rolling-context features outperform static microstructure features.
+- Removing absolute price-level features does not materially reduce performance.
+- Combining benchmark + rolling-context features gives the strongest overall performance.
 
 ## Results Visualizations
 
-### Feature-family comparison
-
-![Feature-family macro F1](reports/figures/feature_family_macro_f1_hgb.png)
-
-### Baseline model comparison
-
-![Baseline macro F1](reports/figures/baseline_macro_f1_by_horizon.png)
-
-### Class-wise F1 for best model
-
-![Class-wise F1](reports/figures/best_model_classwise_f1.png)
+<table>
+	<tr>
+		<td><img src="reports/figures/feature_family_macro_f1_hgb.png" alt="Feature-family macro F1" width="420"></td>
+		<td><img src="reports/figures/baseline_macro_f1_by_horizon.png" alt="Baseline macro F1" width="420"></td>
+	</tr>
+	<tr>
+		<td colspan="2"><img src="reports/figures/best_model_classwise_f1.png" alt="Class-wise F1" width="860"></td>
+	</tr>
+</table>
 
 ## Current Status
 
 Completed:
 
-- FI-2010 data loading utilities
-- dataset exploration
-- horizon-wise baseline modeling
-- DecPre-based order book reconstruction
-- microstructure feature engineering
-- rolling-context feature construction
-- feature-family ablation across all five horizons
+- data loading utilities
+- horizon-wise baselines
+- microstructure features
+- rolling-context features
+- feature-family ablations
 
 In progress:
 
 - probability and confidence analysis
 - BUY / SELL / HOLD signal generation
 - execution-cost-aware backtesting
-- regime-wise evaluation by spread, imbalance, volatility, and liquidity
+- regime-wise evaluation
 
 ## Next Steps
 
-The next stage will evaluate whether model probabilities can be converted into reliable trading-style signals. The planned signal layer will map predicted class probabilities into BUY / SELL / HOLD decisions and evaluate them under bid-ask spread costs.
-
-Planned analysis:
-
-- confidence-bucket accuracy
-- probability calibration diagnostics
+- confidence-bucket accuracy and calibration diagnostics
 - threshold-based signal generation
 - execution-aware PnL simulation
 - regime-wise signal performance
